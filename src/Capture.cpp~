@@ -1,0 +1,562 @@
+// C++ Standard Library
+//#include "stdafx.h"
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <ctime>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <time.h>
+#include <math.h>
+#include <omp.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <dirent.h>
+//GreyPoint Library
+#include "FlyCapture2.h"
+// Opencv Library
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/video/video.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+using namespace cv;
+
+		#define UTC (0)
+#define shuttlespeed 1
+cv::Size patternsize(9,6);
+unsigned int capNum = 7000;   //size_t?
+
+
+double GetTickCount(void) 
+{
+  struct timespec now;
+  if (clock_gettime(CLOCK_MONOTONIC, &now))
+    return 0;
+  return now.tv_sec * 1000.0 + now.tv_nsec / 1000000.0;
+}
+
+void PrintBuildInfo()
+{
+	FlyCapture2::FC2Version fc2Version;
+	FlyCapture2::Utilities::GetLibraryVersion(&fc2Version);
+	char version[128];
+	sprintf( 
+		version, 
+		"FlyCapture2 library version: %d.%d.%d.%d\n", 
+		fc2Version.major, fc2Version.minor, fc2Version.type, fc2Version.build );
+
+	printf( version );
+
+	char timeStamp[512];
+	sprintf( timeStamp, "Application build date: %s %s\n\n", __DATE__, __TIME__ );
+
+	printf( timeStamp );
+}
+
+void PrintCameraInfo( FlyCapture2::CameraInfo* pCamInfo )
+{
+	printf(
+		"\n*** CAMERA INFORMATION ***\n"
+		"Serial number - %u\n"
+		"Camera model - %s\n"
+		"Camera vendor - %s\n"
+		"Sensor - %s\n"
+		"Resolution - %s\n"
+		"Firmware version - %s\n"
+		"Firmware build time - %s\n\n",
+		pCamInfo->serialNumber,
+		pCamInfo->modelName,
+		pCamInfo->vendorName,
+		pCamInfo->sensorInfo,
+		pCamInfo->sensorResolution,
+		pCamInfo->firmwareVersion,
+		pCamInfo->firmwareBuildTime );
+}
+
+void PrintProperty( FlyCapture2::Property* pProp)
+{
+	printf(
+		"\n*** PROPERTY INFORMATION ***\n"
+		"type - %u\n"
+		"abs control - %d\n"
+		"one push - %d\n"
+		"onoff - %d\n"
+		"auto manual mode - %d\n"
+		"abs value - %f\n\n",
+		pProp->type,
+		pProp->absControl,
+		pProp->onePush,
+		pProp->onOff,
+		pProp->autoManualMode,
+		pProp->absValue);
+}
+
+void PrintError( FlyCapture2::Error error )
+{
+	error.PrintErrorTrace();
+}
+
+bool PollForTriggerReady( FlyCapture2::Camera* pCam )	//This is just for software trigger
+{
+	const unsigned int k_softwareTrigger = 0x62C;
+	FlyCapture2::Error error;
+	unsigned int regVal = 0;
+
+	do 
+	{
+		error = pCam->ReadRegister( k_softwareTrigger, &regVal );
+		if (error != FlyCapture2::PGRERROR_OK)
+		{
+			PrintError( error );
+			return false;
+		}
+
+	} while ( (regVal >> 31) != 0 );
+
+	return true;
+}
+
+int main( int argc, char** argv )
+{    
+	int display_counter=0;
+	int numberofoutsync=0;
+	char datestr[20];
+	char timestr[20];
+	time_t currentdate = time(NULL);
+	time_t now;
+	struct tm *timenow;
+	time(&now);
+
+	strftime(datestr, 20, "%b. %d, %Y", localtime(&currentdate));
+	timenow = localtime(&now);
+	strftime(timestr,20,"%H %M",timenow);
+	
+	printf("the current date is %s \n",datestr);
+	printf("the current time is %s \n",timestr);
+	char folderstring[14];
+	folderstring[0]=datestr[0];
+	folderstring[1]=datestr[1];
+	folderstring[2]=datestr[2];
+	folderstring[3]=datestr[5];
+	folderstring[4]=datestr[6];
+	folderstring[5]=datestr[9];
+	folderstring[6]=datestr[10];
+	folderstring[7]=datestr[11];
+	folderstring[8]=datestr[12];
+	folderstring[9]=timestr[0];
+	folderstring[10]=timestr[1];
+	folderstring[11]=':';
+	folderstring[12]=timestr[3];
+	folderstring[13]=timestr[4];	
+	
+	printf("folderstring is %s \n",folderstring);
+	char *home = getenv("HOME");
+	char pathex[30];
+	sprintf(pathex,"%s/experiments",home);
+	if(NULL == opendir(pathex))
+    mkdir(pathex,0777);
+    char finalarray[50];
+	sprintf(finalarray,"%s/%s",pathex,folderstring);
+	mkdir(finalarray,0777);
+
+	//makeing files
+	//actually here we should check whether the directory exists using stat()
+	char txtfile[50];
+	sprintf(txtfile,"%s/timing_file.txt",finalarray);
+	std::ofstream outputFile;
+	outputFile.open(txtfile);
+
+	FlyCapture2::BusManager busMgr;
+	FlyCapture2::Error error;
+	FlyCapture2::PGRGuid guid[2];
+	FlyCapture2::Camera cam[2];
+	FlyCapture2::CameraInfo camInfo[2];
+	FlyCapture2::Property camProperty[2];
+	FlyCapture2::Image rawImage[2]; 
+	FlyCapture2::Image bgrImage[2];
+	unsigned int numCameras;
+	int numImages = 0;
+	double iterTime = 0.0;
+	double Sumiter = 0.0;
+
+	// opencv variable
+	//raw8 format is 1280 * 1024 *1byte per pixel
+	cv::Mat m_res[2];
+	cv::Mat m_show;
+	std::vector<cv::Mat> rawleft;
+	std::vector<cv::Mat> rawright;
+	int currentindex=0;
+	//limit the number of files to capNum
+	rawleft.resize(capNum);
+	rawright.resize(capNum);
+    	char filename0[50];
+	char filename1[50];
+	int fileindex=0;
+	
+	
+	
+	// opencv variable
+	// Get the number of cameras
+	error = busMgr.GetNumOfCameras( &numCameras );
+	if (error != FlyCapture2::PGRERROR_OK
+		&& numCameras >= 2
+		)
+	{
+		PrintError( error );
+		return -1;
+	}
+
+	//PrintBuildInfo();
+	printf( "Number of cameras detected: %u\n", numCameras );
+	
+	// Get the camera information
+	error = busMgr.GetCameraFromSerialNumber(15231302, &guid[0]);
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+
+	error = busMgr.GetCameraFromSerialNumber(15231263, &guid[1]);
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+
+	// Connect to a camera
+	error = cam[0].Connect(&guid[0]);
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+
+	error = cam[1].Connect(&guid[1]);
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+
+	// Get the camera information	
+	error = cam[0].GetCameraInfo(&camInfo[0]);
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+	camProperty[0].type = FlyCapture2::SHUTTER;
+	camProperty[0].absControl = true;
+	camProperty[0].onePush = false;
+	camProperty[0].onOff = true;
+	camProperty[0].autoManualMode = false;
+	camProperty[0].absValue = shuttlespeed;
+	error = cam[0].SetProperty(&camProperty[0]);
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+	error = cam[0].GetProperty(&camProperty[0]);
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+	PrintProperty(&camProperty[0]);
+   
+	error = cam[1].GetCameraInfo(&camInfo[1]);
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+	camProperty[1].type = FlyCapture2::SHUTTER;
+	camProperty[1].absControl = true;
+	camProperty[1].onePush = false;
+	camProperty[1].onOff = true;
+	camProperty[1].autoManualMode = false;
+	camProperty[1].absValue = shuttlespeed;
+	
+	error = cam[1].SetProperty(&camProperty[1]);
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+	error = cam[1].GetProperty(&camProperty[1]);
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+	PrintProperty(&camProperty[1]);
+
+	FlyCapture2::TriggerMode triggerMode[2];
+	error = cam[0].GetTriggerMode( &triggerMode[0] );
+
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+	
+	// Set camera to trigger mode 0
+	triggerMode[0].onOff = true;
+	triggerMode[0].mode = 0; //0
+	triggerMode[0].parameter = 0;
+	triggerMode[0].source = 0;
+	
+	error = cam[0].SetTriggerMode( &triggerMode[0] );
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+
+	error = cam[1].GetTriggerMode( &triggerMode[1] );
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+
+	
+
+
+	// Set camera to trigger mode 0
+	triggerMode[1].onOff = true;
+	triggerMode[1].mode = 0;
+	triggerMode[1].parameter = 0;
+	triggerMode[1].source =0;	// 7 means software tirgger. 0 is camera external trigger
+
+	error = cam[1].SetTriggerMode( &triggerMode[1] );
+	if (error != FlyCapture2::PGRERROR_OK)
+	{
+		PrintError( error );
+		return -1;
+	}
+
+
+		// Display Camera Settings
+	PrintCameraInfo(&camInfo[0]);
+	PrintCameraInfo(&camInfo[1]);
+
+	// Start capturing images
+	error = cam[0].StartCapture();
+	if ( error != FlyCapture2::PGRERROR_OK )
+	{
+		PrintError( error );
+		return -1;
+	}
+
+	error = cam[1].StartCapture();
+	if ( error != FlyCapture2::PGRERROR_OK )
+	{
+		PrintError( error );
+		return -1;
+	}
+
+	cv::namedWindow("1");    
+	for(1;;)
+	{       
+		double _dwStart = GetTickCount();
+		numImages ++;
+
+		// Trigger from two parallel threads
+		#pragma omp parallel sections num_threads(2)
+		{
+			#pragma omp section
+			{
+				if (error != FlyCapture2::PGRERROR_OK)
+				{
+					PrintError(error);
+				}
+			}
+			#pragma omp section
+			{
+				if (error != FlyCapture2::PGRERROR_OK)
+				{
+					PrintError(error);
+				}
+			}
+		}
+
+		// Retrieve images		
+		error = cam[0].RetrieveBuffer( &rawImage[0] );
+		if (error != FlyCapture2::PGRERROR_OK)
+		{
+			PrintError(error);
+			continue;
+		}
+		error = cam[1].RetrieveBuffer( &rawImage[1] );
+		if (error != FlyCapture2::PGRERROR_OK)
+		{
+			PrintError( error );
+			continue;
+		}
+
+
+		int A=std::abs(int(rawImage[0].GetTimeStamp().microSeconds-rawImage[1].GetTimeStamp().microSeconds));
+		int B=std::abs(int((1e6-rawImage[0].GetTimeStamp().microSeconds)-rawImage[1].GetTimeStamp().microSeconds));
+
+		
+	    if(min(A,B)>20000)
+		{
+			numberofoutsync++;
+			
+			display_counter=30;
+
+		}
+
+		Mat outofsyncimage(240, 1280, CV_8UC3, Scalar(0,0,0));
+		char displaymessage[512];
+	    sprintf(displaymessage,"Out of sync for %d frames", numberofoutsync);
+		cv::putText(outofsyncimage,displaymessage,cv::Point(50,200),1,5,cv::Scalar(255,255,255),5);
+		imshow("outbox",outofsyncimage);
+
+		time_t rawtime;
+        struct tm * timeinfo;
+		time ( &rawtime );
+		timeinfo = localtime ( &rawtime );
+		
+		struct tm * ptm;
+		time ( &rawtime );
+		ptm = gmtime ( &rawtime );
+		
+		long ms;
+		struct timespec spec;
+		clock_gettime(CLOCK_REALTIME, &spec);
+		ms = round(spec.tv_nsec / 1.0e6);
+
+		outputFile <<currentindex<<" "<<ptm->tm_year+1900<<" "<<ptm->tm_mon+1<<" "<<ptm->tm_mday<<" "<< (ptm->tm_hour+UTC)%24<<" "<< ptm->tm_min <<" "<< ptm->tm_sec<<" " << ms <<" "<< rawImage[1].GetTimeStamp().seconds <<" "<<  rawImage[1].GetTimeStamp().microSeconds<<" "<< rawImage[0].GetTimeStamp().seconds <<" "<<  rawImage[0].GetTimeStamp().microSeconds<<" " <<std::abs(int(rawImage[0].GetTimeStamp().microSeconds-rawImage[1].GetTimeStamp().microSeconds))<< std::endl;
+		
+		error = rawImage[0].Convert( FlyCapture2::PIXEL_FORMAT_MONO8, &bgrImage[0] );
+		if (error != FlyCapture2::PGRERROR_OK)
+		{
+			PrintError(error);
+			continue;
+		}
+		//printf("\nrawImage[0].Convert Clear of error!\n");
+		error = rawImage[1].Convert( FlyCapture2::PIXEL_FORMAT_MONO8, &bgrImage[1] );
+		if (error != FlyCapture2::PGRERROR_OK)
+		{
+			PrintError(error);
+			continue;
+		}
+
+		// convert to OpenCV Mat
+		cv::Mat m_raw[2];
+
+
+		unsigned int rowBytes = (double)bgrImage[0].GetReceivedDataSize() / (double)bgrImage[0].GetRows();       
+		m_raw[0] = cv::Mat( bgrImage[0].GetRows(), bgrImage[0].GetCols(), CV_8UC1, 
+			bgrImage[0].GetData(), rowBytes );
+		m_raw[1] = cv::Mat( bgrImage[1].GetRows(), bgrImage[1].GetCols(), CV_8UC1, 
+			bgrImage[1].GetData(), rowBytes );
+		
+		if( m_raw[0].cols > 640 ) 
+		{
+			cv::resize( m_raw[0], m_res[0], cv::Size( 640, 640*m_raw[0].rows/m_raw[0].cols ) );
+			cv::resize( m_raw[1], m_res[1], cv::Size( 640, 640*m_raw[1].rows/m_raw[1].cols ) );
+			
+			
+			m_show = cv::Mat( m_res[0].rows, m_res[0].cols*2, CV_8UC1);
+
+			m_res[0].copyTo(m_show( cv::Rect( 0, 0, m_res[0].cols, m_res[0].rows ) ) );
+			m_res[1].copyTo(m_show( cv::Rect( m_res[0].cols, 0, m_res[1].cols, m_res[1].rows ) ) );
+		
+		}
+
+		m_raw[1].copyTo(rawleft[currentindex]);
+		m_raw[0].copyTo(rawright[currentindex]);
+		
+		currentindex++;
+		
+		cv::imshow("1", m_show );
+		//char input=cv::waitKey(1);
+		
+
+		iterTime = (GetTickCount() - _dwStart);
+		Sumiter += iterTime;
+		if(1 == (numImages%20))
+		{
+			//std::cout<<std::abs(int(rawImage[0].GetTimeStamp().microSeconds-rawImage[1].GetTimeStamp().microSeconds))<<std::endl;			
+			printf( "Grabbed image %d @ %.2f\n", numImages, (double)(1/iterTime*1000) );
+		}
+
+		if(currentindex>=capNum )
+		{
+			outputFile.close();			
+			Sumiter = Sumiter/currentindex;
+			printf( "The average speed rate of the cameras is %.2f fps\n",(double)(1/Sumiter*1000) );
+			for(int i=0; i<currentindex-2;i++)
+			{
+				sprintf(filename0,"%s/L%05d.png",finalarray,i);
+				sprintf(filename1,"%s/R%05d.png",finalarray,i);
+				cv::imwrite(filename0,rawleft[i]);
+				cv::imwrite(filename1,rawright[i]);
+			}
+			//outputFile.close();
+			cv::waitKey(1);		
+			printf( "StopCapture()");
+			// Stop capturing images
+			error = cam[0].StopCapture();
+			if ( error != FlyCapture2::PGRERROR_OK )
+			{
+				PrintError( error );
+				return -1;
+			}
+
+			error = cam[1].StopCapture();
+			if ( error != FlyCapture2::PGRERROR_OK )
+			{
+				PrintError( error );
+				return -1;
+			}
+			
+			//Sleep(1000);		
+			printf( "SetTriggerMode()");
+			// Trigger
+			triggerMode[0].onOff = false;    
+			error = cam[0].SetTriggerMode( &triggerMode[0] );
+			if (error != FlyCapture2::PGRERROR_OK)
+			{
+				PrintError( error );
+				return -1;
+			}
+			triggerMode[1].onOff = false; 
+			error = cam[1].SetTriggerMode( &triggerMode[1] );
+			if (error != FlyCapture2::PGRERROR_OK)
+			{
+				PrintError( error );
+				return -1;
+			}
+			sleep(1000);		
+			printf( "Disconnect()");
+			// Disconnect the camera
+			error = cam[0].Disconnect();
+			if (error != FlyCapture2::PGRERROR_OK)
+			{
+				PrintError( error );
+				return -1;
+			}
+
+			error = cam[1].Disconnect();
+			if (error != FlyCapture2::PGRERROR_OK)
+			{
+				PrintError( error );
+				return -1;
+			}
+			break;
+		}
+
+		
+	}            
+
+	return 0;
+}

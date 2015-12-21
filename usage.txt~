@@ -1,0 +1,8 @@
+.%which contains OpenCVConfig.cmake
+
+
+cd ./build
+
+cmake .. -DCMAKE_PREFIX_PATH='/home/chris/opencv-2.4.11/release/installed/share/OpenCV' 
+
+make
