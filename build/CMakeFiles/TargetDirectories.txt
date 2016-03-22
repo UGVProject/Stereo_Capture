@@ -1,1 +1,1 @@
-/home/chris/projects/StereoCapture_1220/build/src/CMakeFiles/cap.dir
+/home/zh/projects/StereoCapture_normal/build/src/CMakeFiles/cap.dir

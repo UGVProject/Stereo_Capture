@@ -1,5 +1,4 @@
 #include "flycap.h"
-#include "ImageDisplay.h"
 // Opencv Library
 #include <opencv2/calib3d/calib3d.hpp>
 //#include <opencv2/core/core.hpp>
@@ -41,19 +40,19 @@ int main( int argc, char** argv )
             }
             if(extent == 'j')
             {
-            	extent3 = "jpg";
+            	extent3 = (char *)"jpg";
             }	
             else if(extent == 'b')
             {
-            	extent3 = "bmp";
+            	extent3 = (char *)"bmp";
             }
             else if(extent == 'm')
             {
-            	extent3 = "ppm";
+            	extent3 = (char *)"ppm";
             }
             else
             {
-            	extent3 = "png";
+            	extent3 = (char *)"png";
             }
     	}
         else if(strcmp(argv[i],"n")==0)
@@ -247,10 +246,6 @@ int main( int argc, char** argv )
 			PrintError( error );
 			return -1;
 		}
-		// camProperty[0].type = FlyCapture2::BRIGHTNESS;
-		// camProperty[0].absControl = true;
-		// camProperty[0].absValue = 5;
-
 		camProperty[0].type = FlyCapture2::SHUTTER;
 		camProperty[0].absControl = true;
 		camProperty[0].onePush = false;
@@ -277,15 +272,12 @@ int main( int argc, char** argv )
 			PrintError( error );
 			return -1;
 		}
-		// camProperty[1].type = FlyCapture2::BRIGHTNESS;
-		// camProperty[1].absControl = true;
-		// camProperty[1].absValue = 5;
 		camProperty[1].type = FlyCapture2::SHUTTER;
 		camProperty[1].absControl = true;
 		camProperty[1].onePush = false;
 		camProperty[1].onOff = true;
 		camProperty[1].autoManualMode = false;
-		camProperty[1].absValue = 40;
+		camProperty[1].absValue = 50;
 
 		error = cam[1].SetProperty(&camProperty[1]);
 		if (error != FlyCapture2::PGRERROR_OK)
@@ -377,13 +369,14 @@ int main( int argc, char** argv )
 		}
 		int A=std::abs(int(rawImage[0].GetTimeStamp().microSeconds-rawImage[1].GetTimeStamp().microSeconds));
 		int B=std::abs(int((1e6-rawImage[0].GetTimeStamp().microSeconds)-rawImage[1].GetTimeStamp().microSeconds));
+        
+        //std::cout << "The timestamp for now is " << rawImage[0].GetTimeStamp().microSeconds << " haha \n" << std::endl;
 		
 	    if(min(A,B)>30)  	
 		{
 			numberofoutsync++;
 		}
 
-		//Mat outofsyncimage(240, 1280, CV_8UC3, Scalar(0,0,0));
 		Mat outofsyncimage(120, 500, CV_8UC3, Scalar(0,0,0));
 		char displaymessage[64];
 	    sprintf(displaymessage,"Out of sync for %d frames", numberofoutsync);
@@ -440,14 +433,11 @@ int main( int argc, char** argv )
 		
 		}
 
-		m_raw[0].copyTo(rawleft[currentindex]);
-		m_raw[1].copyTo(rawright[currentindex]);
-		
-		//Util::displayImage("StereoCapture",m_show);
 		cv::imshow("StereoCapture", m_show );
 		input=cv::waitKey(1);
 
-		
+		m_raw[0].copyTo(rawleft[currentindex]);
+		m_raw[1].copyTo(rawright[currentindex]);
 		iterTime = (GetTickCount() - _dwStart);
 		Sumiter += iterTime;
 
@@ -469,10 +459,10 @@ int main( int argc, char** argv )
 			}
 		}
 
-		if((currentindex>=capNum) ||(input == 27))
+		if((currentindex >= capNum) ||(input == 27))  //when the caputured number of images has come to the threshold or you press 'esc', the capture process ends.
 		{
 			outputFile.close();		
-			Sumiter = Sumiter/currentindex;
+			Sumiter = Sumiter / currentindex;
 			std::cout << "The average speed rate of the cameras is  " << (double)(1/Sumiter*1000) << "  fps\n" << std::endl;
 
 			std::cout << "Stop Capturing" << std::endl;

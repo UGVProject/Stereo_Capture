@@ -6,3 +6,20 @@ cd ./build
 cmake .. -DCMAKE_PREFIX_PATH='/home/chris/opencv-2.4.11/release/installed/share/OpenCV' 
 
 make
+
+Example:
+
+./cap  ---------------------normal mode with .png capture number = 1000
+./cap m 0 e m   ------------normal mode with .ppm
+./cap m 0 e b   ------------normal mode with .bmp
+./cap m 0 e j   ------------normal mode with .jpg
+./cap m 0 e j n 502 --------normal mode with .jpg capture number = 502
+
+
+./cap  ---------------------calibration mode with .png
+./cap m 2 e m   ------------calibration mode with .ppm
+./cap m 2 e b   ------------calibration mode with .bmp
+./cap m 2 e j   ------------calibration mode with .jpg
+
+
+During capturing, press "esc" to stop capturing and begin saving...

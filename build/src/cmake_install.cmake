@@ -1,4 +1,4 @@
-# Install script for directory: /home/chris/projects/StereoCapture_1220/src
+# Install script for directory: /home/zh/projects/StereoCapture_normal/src
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)

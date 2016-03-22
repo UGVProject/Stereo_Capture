@@ -38,22 +38,19 @@ RM = /usr/bin/cmake -E remove -f
 # Escaping for special characters.
 EQUALS = =
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/cmake-gui
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/chris/projects/StereoCapture_1220
+CMAKE_SOURCE_DIR = /home/zh/projects/StereoCapture_normal
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/chris/projects/StereoCapture_1220/build
+CMAKE_BINARY_DIR = /home/zh/projects/StereoCapture_normal/build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/cmake-gui -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -72,14 +69,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/chris/projects/StereoCapture_1220/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/chris/projects/StereoCapture_1220/build/CMakeFiles /home/chris/projects/StereoCapture_1220/build/src/CMakeFiles/progress.marks
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f CMakeFiles/Makefile2 src/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/chris/projects/StereoCapture_1220/build/CMakeFiles 0
+	cd /home/zh/projects/StereoCapture_normal/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/zh/projects/StereoCapture_normal/build/CMakeFiles /home/zh/projects/StereoCapture_normal/build/src/CMakeFiles/progress.marks
+	cd /home/zh/projects/StereoCapture_normal/build && $(MAKE) -f CMakeFiles/Makefile2 src/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/zh/projects/StereoCapture_normal/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f CMakeFiles/Makefile2 src/clean
+	cd /home/zh/projects/StereoCapture_normal/build && $(MAKE) -f CMakeFiles/Makefile2 src/clean
 .PHONY : clean
 
 # The main clean target
@@ -88,22 +85,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
+	cd /home/zh/projects/StereoCapture_normal/build && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
+	cd /home/zh/projects/StereoCapture_normal/build && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/chris/projects/StereoCapture_1220/build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/zh/projects/StereoCapture_normal/build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/CMakeFiles/cap.dir/rule:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/cap.dir/rule
+	cd /home/zh/projects/StereoCapture_normal/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/cap.dir/rule
 .PHONY : src/CMakeFiles/cap.dir/rule
 
 # Convenience name for target.
@@ -112,7 +109,7 @@ cap: src/CMakeFiles/cap.dir/rule
 
 # fast build rule for target.
 cap/fast:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/build
+	cd /home/zh/projects/StereoCapture_normal/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/build
 .PHONY : cap/fast
 
 Capture.o: Capture.cpp.o
@@ -120,7 +117,7 @@ Capture.o: Capture.cpp.o
 
 # target to build an object file
 Capture.cpp.o:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/Capture.cpp.o
+	cd /home/zh/projects/StereoCapture_normal/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/Capture.cpp.o
 .PHONY : Capture.cpp.o
 
 Capture.i: Capture.cpp.i
@@ -128,7 +125,7 @@ Capture.i: Capture.cpp.i
 
 # target to preprocess a source file
 Capture.cpp.i:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/Capture.cpp.i
+	cd /home/zh/projects/StereoCapture_normal/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/Capture.cpp.i
 .PHONY : Capture.cpp.i
 
 Capture.s: Capture.cpp.s
@@ -136,39 +133,15 @@ Capture.s: Capture.cpp.s
 
 # target to generate assembly for a file
 Capture.cpp.s:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/Capture.cpp.s
+	cd /home/zh/projects/StereoCapture_normal/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/Capture.cpp.s
 .PHONY : Capture.cpp.s
-
-ImageDisplay_OpenCV.o: ImageDisplay_OpenCV.cpp.o
-.PHONY : ImageDisplay_OpenCV.o
-
-# target to build an object file
-ImageDisplay_OpenCV.cpp.o:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/ImageDisplay_OpenCV.cpp.o
-.PHONY : ImageDisplay_OpenCV.cpp.o
-
-ImageDisplay_OpenCV.i: ImageDisplay_OpenCV.cpp.i
-.PHONY : ImageDisplay_OpenCV.i
-
-# target to preprocess a source file
-ImageDisplay_OpenCV.cpp.i:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/ImageDisplay_OpenCV.cpp.i
-.PHONY : ImageDisplay_OpenCV.cpp.i
-
-ImageDisplay_OpenCV.s: ImageDisplay_OpenCV.cpp.s
-.PHONY : ImageDisplay_OpenCV.s
-
-# target to generate assembly for a file
-ImageDisplay_OpenCV.cpp.s:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/ImageDisplay_OpenCV.cpp.s
-.PHONY : ImageDisplay_OpenCV.cpp.s
 
 flycap.o: flycap.cpp.o
 .PHONY : flycap.o
 
 # target to build an object file
 flycap.cpp.o:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/flycap.cpp.o
+	cd /home/zh/projects/StereoCapture_normal/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/flycap.cpp.o
 .PHONY : flycap.cpp.o
 
 flycap.i: flycap.cpp.i
@@ -176,7 +149,7 @@ flycap.i: flycap.cpp.i
 
 # target to preprocess a source file
 flycap.cpp.i:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/flycap.cpp.i
+	cd /home/zh/projects/StereoCapture_normal/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/flycap.cpp.i
 .PHONY : flycap.cpp.i
 
 flycap.s: flycap.cpp.s
@@ -184,7 +157,7 @@ flycap.s: flycap.cpp.s
 
 # target to generate assembly for a file
 flycap.cpp.s:
-	cd /home/chris/projects/StereoCapture_1220/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/flycap.cpp.s
+	cd /home/zh/projects/StereoCapture_normal/build && $(MAKE) -f src/CMakeFiles/cap.dir/build.make src/CMakeFiles/cap.dir/flycap.cpp.s
 .PHONY : flycap.cpp.s
 
 # Help Target
@@ -199,9 +172,6 @@ help:
 	@echo "... Capture.o"
 	@echo "... Capture.i"
 	@echo "... Capture.s"
-	@echo "... ImageDisplay_OpenCV.o"
-	@echo "... ImageDisplay_OpenCV.i"
-	@echo "... ImageDisplay_OpenCV.s"
 	@echo "... flycap.o"
 	@echo "... flycap.i"
 	@echo "... flycap.s"
@@ -216,6 +186,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/chris/projects/StereoCapture_1220/build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/zh/projects/StereoCapture_normal/build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

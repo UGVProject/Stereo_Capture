@@ -3,7 +3,7 @@
 
 cd ./build
 
-cmake .. -DCMAKE_PREFIX_PATH='/home/chris/opencv-2.4.11/release/installed/share/OpenCV' 
+cmake ..  
 
 make
 
@@ -13,7 +13,7 @@ Example:
 ./cap m 0 e m   ------------normal mode with .ppm
 ./cap m 0 e b   ------------normal mode with .bmp
 ./cap m 0 e j   ------------normal mode with .jpg
-./cap m 0 e j n 500 --------normal mode with .jpg capture number = 500
+./cap m 0 e j n 502 --------normal mode with .jpg capture number = 502
 
 
 ./cap  ---------------------calibration mode with .png

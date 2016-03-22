@@ -8,10 +8,12 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
-//#include <omp.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <dirent.h>
+#ifdef LINUX
+#include <unistd.h>
+#endif
+
 
 #define UTC (0)
 #define shuttlespeed 2

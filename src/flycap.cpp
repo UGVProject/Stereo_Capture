@@ -12,7 +12,7 @@ struct tm *timenow;
 char finalarray[50];
 char folderstring[14];
 char txtfile[50];
-unsigned int capNum = 1000;
+unsigned int capNum = 2200;
 unsigned int numCameras;
 int numImages = 0;
 double iterTime = 0.0;
@@ -24,7 +24,7 @@ int fileindex=0;
 char input=0;
 int mode = 0;		//default mode is 0, calibration mode is 2 ;
 char extent;
-char* extent3 = "png";
+char* extent3 = (char *)"png";
 
 double GetTickCount(void) 
 {

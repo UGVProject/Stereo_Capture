@@ -1,4 +1,4 @@
-# Install script for directory: /home/chris/projects/StereoCapture_1220
+# Install script for directory: /home/zh/projects/StereoCapture_normal
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,7 +34,7 @@ ENDIF(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 
 IF(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  INCLUDE("/home/chris/projects/StereoCapture_1220/build/src/cmake_install.cmake")
+  INCLUDE("/home/zh/projects/StereoCapture_normal/build/src/cmake_install.cmake")
 
 ENDIF(NOT CMAKE_INSTALL_LOCAL_ONLY)
 
@@ -44,7 +44,7 @@ ELSE(CMAKE_INSTALL_COMPONENT)
   SET(CMAKE_INSTALL_MANIFEST "install_manifest.txt")
 ENDIF(CMAKE_INSTALL_COMPONENT)
 
-FILE(WRITE "/home/chris/projects/StereoCapture_1220/build/${CMAKE_INSTALL_MANIFEST}" "")
+FILE(WRITE "/home/zh/projects/StereoCapture_normal/build/${CMAKE_INSTALL_MANIFEST}" "")
 FOREACH(file ${CMAKE_INSTALL_MANIFEST_FILES})
-  FILE(APPEND "/home/chris/projects/StereoCapture_1220/build/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
+  FILE(APPEND "/home/zh/projects/StereoCapture_normal/build/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
 ENDFOREACH(file)
